@@ -22,7 +22,7 @@ macro(require_cpp11)
 endmacro()
 
 option(test "Build all tests" OFF)
-option(build_static_lib "Build easyloggingpp as a static library" OFF)
+option(build_static_lib "Build easyloggingpp as a static library" ON)
 option(lib_utc_datetime "Build library with UTC date/time logging" OFF)
 
 set(ELPP_MAJOR_VERSION "9")
@@ -30,11 +30,12 @@ set(ELPP_MINOR_VERSION "95")
 set(ELPP_PATCH_VERSION "3")
 set(ELPP_VERSION_STRING "${ELPP_MAJOR_VERSION}.${ELPP_MINOR_VERSION}.${ELPP_PATCH_VERSION}")
 
-set(ELPP_INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "The directory the headers are installed in")
+set(ELPP_INCLUDE_INSTALL_DIR ${PROJECT_SOURCE_DIR}/src ${PROJECT_BINARY_DIR})
+include_directories(${ELPP_INCLUDE_INSTALL_DIR})
+set(ELPP_INCLUDE_INSTALL_DIR "${ELPP_INCLUDE_INSTALL_DIR}" CACHE STRING "where headers are installed")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DELPP_NO_DEFAULT_LOG_FILE")
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DELPP_FEATURE_PERFORMANCE_TRACKING")
 
 install(FILES
     src/easylogging++.h
@@ -43,7 +44,10 @@ install(FILES
     COMPONENT dev)
 
 if (build_static_lib)
-        if (lib_utc_datetime)
+#        add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
+#	add_definitions(-DELPP_NO_DEFAULT_LOG_FILE)
+
+	if (lib_utc_datetime)
                 add_definitions(-DELPP_UTC_DATETIME)
         endif()
 
