@@ -45,8 +45,6 @@ install(FILES
     COMPONENT dev)
 
 if (build_static_lib)
-#        add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
-#	add_definitions(-DELPP_NO_DEFAULT_LOG_FILE)
 
 	if (lib_utc_datetime)
                 add_definitions(-DELPP_UTC_DATETIME)
