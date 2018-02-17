@@ -30,9 +30,14 @@ set(ELPP_MINOR_VERSION "95")
 set(ELPP_PATCH_VERSION "3")
 set(ELPP_VERSION_STRING "${ELPP_MAJOR_VERSION}.${ELPP_MINOR_VERSION}.${ELPP_PATCH_VERSION}")
 
+<<<<<<< HEAD
 set(ELPP_INCLUDE_INSTALL_DIR ${PROJECT_SOURCE_DIR}/src ${PROJECT_BINARY_DIR})
 include_directories(${ELPP_INCLUDE_INSTALL_DIR})
 set(ELPP_INCLUDE_INSTALL_DIR "${ELPP_INCLUDE_INSTALL_DIR}" CACHE STRING "where headers are installed")
+=======
+set(ELPP_INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "The directory the headers are installed in")
+set(ELPP_PKGCONFIG_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
+>>>>>>> 6efc491421c8391bb1f5dce180aedaaf98302273
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DELPP_NO_DEFAULT_LOG_FILE")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DELPP_FEATURE_PERFORMANCE_TRACKING")
@@ -42,6 +47,11 @@ install(FILES
     src/easylogging++.cc
     DESTINATION "${ELPP_INCLUDE_INSTALL_DIR}"
     COMPONENT dev)
+
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/easyloggingpp.pc.cmakein
+    ${CMAKE_CURRENT_BINARY_DIR}/easyloggingpp.pc @ONLY)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/easyloggingpp.pc DESTINATION "${ELPP_PKGCONFIG_INSTALL_DIR}")
 
 if (build_static_lib)
 #        add_definitions(-DELPP_FEATURE_PERFORMANCE_TRACKING)
