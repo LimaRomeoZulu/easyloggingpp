@@ -1,18 +1,20 @@
 //
 //  Bismillah ar-Rahmaan ar-Raheem
 //
-//  Easylogging++ v9.95.3
+//  Easylogging++ v9.96.0
 //  Single-header only, cross-platform logging library for C++ applications
 //
-//  Copyright (c) 2017 muflihun.com
+//  Copyright (c) 2012-2018 Muflihun Labs
+//  Copyright (c) 2012-2018 @abumusamq
 //
 //  This library is released under the MIT Licence.
-//  http://labs.muflihun.com/easyloggingpp/licence.php
+//  https://github.com/muflihun/easyloggingpp/blob/master/LICENSE
 //
 //  https://github.com/muflihun/easyloggingpp
 //  https://muflihun.github.io/easyloggingpp
 //  http://muflihun.com
 //
+
 #ifndef EASYLOGGINGPP_H
 #define EASYLOGGINGPP_H
 // Compilers and C++0x/C++11 Evaluation
@@ -1262,8 +1264,8 @@ class DateTime : base::StaticClass {
       base::TimestampUnit timestampUnit);
 
 
- private:
   static struct ::tm* buildTimeInfo(struct timeval* currTime, struct ::tm* timeInfo);
+ private:
   static char* parseFormat(char* buf, std::size_t bufSz, const char* format, const struct tm* tInfo,
                            std::size_t msec, const base::SubsecondPrecision* ssPrec);
 };
@@ -2601,7 +2603,7 @@ class IWorker {
 };
 #endif // ELPP_ASYNC_LOGGING
 /// @brief Easylogging++ management storage
-class Storage : base::NoCopy, public base::threading::ThreadSafe {
+class Storage : base::NoCopy {
  public:
 #if ELPP_ASYNC_LOGGING
   Storage(const LogBuilderPtr& defaultLogBuilder, base::IWorker* asyncDispatchWorker);
@@ -2685,6 +2687,10 @@ class Storage : base::NoCopy, public base::threading::ThreadSafe {
     return &m_customFormatSpecifiers;
   }
 
+  base::threading::Mutex& customFormatSpecifiersLock() {
+    return m_customFormatSpecifiersLock;
+  }
+
   inline void setLoggingLevel(Level level) {
     m_loggingLevel = level;
   }
@@ -2725,11 +2731,12 @@ class Storage : base::NoCopy, public base::threading::ThreadSafe {
   /// @brief Sets thread name for current thread. Requires std::thread
   inline void setThreadName(const std::string& name) {
     if (name.empty()) return;
-    base::threading::ScopedLock scopedLock(lock());
+    base::threading::ScopedLock scopedLock(m_threadNamesLock);
     m_threadNames[base::threading::getCurrentThreadId()] = name;
   }
 
   inline std::string getThreadName(const std::string& threadId) {
+    base::threading::ScopedLock scopedLock(m_threadNamesLock);
     std::map<std::string, std::string>::const_iterator it = m_threadNames.find(threadId);
     if (it == m_threadNames.end()) {
       return threadId;
@@ -2751,6 +2758,8 @@ class Storage : base::NoCopy, public base::threading::ThreadSafe {
   std::map<std::string, base::type::PerformanceTrackingCallbackPtr> m_performanceTrackingCallbacks;
   std::map<std::string, std::string> m_threadNames;
   std::vector<CustomFormatSpecifier> m_customFormatSpecifiers;
+  base::threading::Mutex m_customFormatSpecifiersLock;
+  base::threading::Mutex m_threadNamesLock;
   Level m_loggingLevel;
 
   friend class el::Helpers;
@@ -2793,7 +2802,7 @@ class AsyncDispatchWorker : public base::IWorker, public base::threading::Thread
   void run(void);
 
   void setContinueRunning(bool value) {
-    base::threading::ScopedLock scopedLock(m_continueRunningMutex);
+    base::threading::ScopedLock scopedLock(m_continueRunningLock);
     m_continueRunning = value;
   }
 
@@ -2803,7 +2812,7 @@ class AsyncDispatchWorker : public base::IWorker, public base::threading::Thread
  private:
   std::condition_variable cv;
   bool m_continueRunning;
-  base::threading::Mutex m_continueRunningMutex;
+  base::threading::Mutex m_continueRunningLock;
 };
 #endif  // ELPP_ASYNC_LOGGING
 }  // namespace base
@@ -3794,6 +3803,11 @@ class Helpers : base::StaticClass {
   /// @brief Returns command line arguments (pointer) provided to easylogging++
   static inline const el::base::utils::CommandLineArgs* commandLineArgs(void) {
     return ELPP->commandLineArgs();
+  }
+  /// @brief Reserve space for custom format specifiers for performance
+  /// @see std::vector::reserve
+  static inline void reserveCustomFormatSpecifiers(std::size_t size) {
+    ELPP->m_customFormatSpecifiers.reserve(size);
   }
   /// @brief Installs user defined format specifier and handler
   static inline void installCustomFormatSpecifier(const CustomFormatSpecifier& customFormatSpecifier) {
